@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Betting Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        #progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            width: 100%;
+            transition: width 1s;
+        }
+        .odds-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .team-odds {
+            flex: 1;
+            padding: 15px;
+            margin: 0 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        #team1 {
+            background-color: #f0f8ff;
+        }
+        #team2 {
+            background-color: #fff0f0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: #e9f7ef;
+            display: none;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .total-profit-loss {
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 18px;
+        }
+        .bets-container {
+            margin-top: 20px;
+        }
+        .bet-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .bet-details {
+            flex: 1;
+        }
+        .bet-profits {
+            text-align: right;
+        }
+        .toggle-container {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .toggle-label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cricket Betting Simulator</h1>
+        
+        <div class="toggle-container">
+            <label class="toggle-label">Manual Odds:</label>
+            <input type="checkbox" id="manual-odds-toggle">
+        </div>
+        
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="timer">Time remaining: 5:00</p>
+        
+        <div class="odds-container">
+            <div class="team-odds" id="team1">
+                <h3>Team 1</h3>
+                <p>Current Odds: <span id="odds1">2.50</span></p>
+                <div class="form-group" id="manual-odds1-container" style="display: none;">
+                    <label for="manual-odds1">Enter Odds:</label>
+                    <input type="number" id="manual-odds1" step="0.01" min="1.01">
+                </div>
+                <div class="form-group">
+                    <label for="stake1">Stake Amount:</label>
+                    <input type="number" id="stake1" step="0.01" min="0.01">
+                </div>
+                <button id="bet1">Place Bet</button>
+                <div class="total-profit-loss" id="total1">Total: 0.00</div>
+            </div>
+            
+            <div class="team-odds" id="team2">
+                <h3>Team 2</h3>
+                <p>Current Odds: <span id="odds2">1.50</span></p>
+                <div class="form-group" id="manual-odds2-container" style="display: none;">
+                    <label for="manual-odds2">Enter Odds:</label>
+                    <input type="number" id="manual-odds2" step="0.01" min="1.01">
+                </div>
+                <div class="form-group">
+                    <label for="stake2">Stake Amount:</label>
+                    <input type="number" id="stake2" step="0.01" min="0.01">
+                </div>
+                <button id="bet2">Place Bet</button>
+                <div class="total-profit-loss" id="total2">Total: 0.00</div>
+            </div>
+        </div>
+        
+        <div class="bets-container">
+            <h3>Your Bets</h3>
+            <div id="bets-list"></div>
+        </div>
+        
+        <div id="result" class="result">
+            <h2>Bet Placed!</h2>
+            <p id="bet-details"></p>
+        </div>
+        
+        <div id="error" class="error"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBar = document.getElementById('progress-bar');
+            const timerElement = document.getElementById('timer');
+            const odds1Element = document.getElementById('odds1');
+            const odds2Element = document.getElementById('odds2');
+            const total1Element = document.getElementById('total1');
+            const total2Element = document.getElementById('total2');
+            const manualOddsToggle = document.getElementById('manual-odds-toggle');
+            const manualOdds1Container = document.getElementById('manual-odds1-container');
+            const manualOdds2Container = document.getElementById('manual-odds2-container');
+            const manualOdds1 = document.getElementById('manual-odds1');
+            const manualOdds2 = document.getElementById('manual-odds2');
+            const resultDiv = document.getElementById('result');
+            const betDetails = document.getElementById('bet-details');
+            const betsList = document.getElementById('bets-list');
+            const errorDiv = document.getElementById('error');
+            
+            let timeLeft = 300; // 5 minutes in seconds
+            let interval;
+            let autoUpdateOdds = true;
+            
+            // Initial odds
+            let odds1 = 2.50;
+            let odds2 = 1.50;
+            
+            // Total profit or loss for each team
+            let totalTeam1 = 0;
+            let totalTeam2 = 0;
+            
+            // Update odds logically based on the current situation
+            function updateOdds() {
+                if (!autoUpdateOdds) return;
+                
+                // Simulate changes based on the match situation
+                const matchSituation = Math.random();
+                
+                if (matchSituation < 0.3) {
+                    // Team 1 is performing well
+                    odds1 = parseFloat((odds1 * 0.95).toFixed(2));
+                    odds2 = parseFloat((odds2 * 1.05).toFixed(2));
+                } else if (matchSituation > 0.7) {
+                    // Team 2 is performing well
+                    odds1 = parseFloat((odds1 * 1.05).toFixed(2));
+                    odds2 = parseFloat((odds2 * 0.95).toFixed(2));
+                } else {
+                    // Random small changes
+                    const changeFactor = 0.05; // 5% max change
+                    const randomChange1 = 1 + (Math.random() * 2 * changeFactor - changeFactor);
+                    const randomChange2 = 1 + (Math.random() * 2 * changeFactor - changeFactor);
+                    
+                    odds1 = parseFloat((odds1 * randomChange1).toFixed(2));
+                    odds2 = parseFloat((odds2 * randomChange2).toFixed(2));
+                }
+                
+                odds1Element.textContent = odds1;
+                odds2Element.textContent = odds2;
+            }
+            
+            // Update timer and progress bar
+            function updateTimer() {
+                timeLeft--;
+                
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `Time remaining: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                const progress = (timeLeft / 300) * 100;
+                progressBar.style.width = `${progress}%`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    // End of betting period
+                    resultDiv.style.display = 'block';
+                    betDetails.textContent = 'Betting period has ended!';
+                }
+            }
+            
+            // Calculate profit
+            function calculateProfit(stake, odds) {
+                return parseFloat((stake * odds - stake).toFixed(2));
+            }
+            
+            // Add bet to the list
+            function addBetToList(team, stake, odds) {
+                const betItem = document.createElement('div');
+                betItem.className = 'bet-item';
+                
+                const betDetails = document.createElement('div');
+                betDetails.className = 'bet-details';
+                betDetails.textContent = `Team ${team} - Stake: ${stake}, Odds: ${odds}`;
+                
+                const betProfits = document.createElement('div');
+                betProfits.className = 'bet-profits';
+                betProfits.textContent = `Potential Profit: ${calculateProfit(stake, odds)}`;
+                
+                betItem.appendChild(betDetails);
+                betItem.appendChild(betProfits);
+                
+                betsList.appendChild(betItem);
+            }
+            
+            // Update total profit or loss display for each team
+            function updateTotalProfitOrLoss() {
+                // Display total profit or loss for Team 1
+                total1Element.textContent = `Total: ${totalTeam1.toFixed(2)}`;
+                if (totalTeam1 > 0) {
+                    total1Element.style.color = 'green';
+                } else if (totalTeam1 < 0) {
+                    total1Element.style.color = 'red';
+                } else {
+                    total1Element.style.color = 'black';
+                }
+                
+                // Display total profit or loss for Team 2
+                total2Element.textContent = `Total: ${totalTeam2.toFixed(2)}`;
+                if (totalTeam2 > 0) {
+                    total2Element.style.color = 'green';
+                } else if (totalTeam2 < 0) {
+                    total2Element.style.color = 'red';
+                } else {
+                    total2Element.style.color = 'black';
+                }
+            }
+            
+            // Place bet
+            function placeBet(team, stake, odds) {
+                if (stake <= 0) {
+                    errorDiv.textContent = 'Stake amount must be greater than 0!';
+                    return;
+                }
+                
+                const profit = calculateProfit(stake, odds);
+                resultDiv.style.display = 'block';
+                betDetails.textContent = `You bet ${stake} on Team ${team} at odds ${odds}. Potential payout: ${profit}`;
+                
+                // Update total profit or loss for the respective team
+                if (team === 1) {
+                    totalTeam1 += profit;
+                    totalTeam2 -= stake;
+                } else {
+                    totalTeam2 += profit;
+                    totalTeam1 -= stake;
+                }
+                
+                addBetToList(team, stake, odds);
+                updateTotalProfitOrLoss();
+            }
+            
+            // Toggle manual odds entry
+            manualOddsToggle.addEventListener('change', function() {
+                autoUpdateOdds = !this.checked;
+                manualOdds1Container.style.display = this.checked ? 'block' : 'none';
+                manualOdds2Container.style.display = this.checked ? 'block' : 'none';
+                
+                if (!autoUpdateOdds) {
+                    clearInterval(oddsInterval);
+                } else {
+                    oddsInterval = setInterval(updateOdds, 5000);
+                }
+            });
+            
+            // Event listeners for bet buttons
+            document.getElementById('bet1').addEventListener('click', function() {
+                const stake = parseFloat(document.getElementById('stake1').value);
+                const odds = autoUpdateOdds ? odds1 : parseFloat(manualOdds1.value);
+                
+                if (!isNaN(stake) && (!autoUpdateOdds || !isNaN(odds))) {
+                    if (autoUpdateOdds || (odds >= 1.01)) {
+                        placeBet(1, stake, odds);
+                    } else {
+                        errorDiv.textContent = 'Odds must be greater than 1.01!';
+                    }
+                } else {
+                    errorDiv.textContent = 'Please enter a valid stake amount and odds!';
+                }
+            });
+            
+            document.getElementById('bet2').addEventListener('click', function() {
+                const stake = parseFloat(document.getElementById('stake2').value);
+                const odds = autoUpdateOdds ? odds2 : parseFloat(manualOdds2.value);
+                
+                if (!isNaN(stake) && (!autoUpdateOdds || !isNaN(odds))) {
+                    if (autoUpdateOdds || (odds >= 1.01)) {
+                        placeBet(2, stake, odds);
+                    } else {
+                        errorDiv.textContent = 'Odds must be greater than 1.01!';
+                    }
+                } else {
+                    errorDiv.textContent = 'Please enter a valid stake amount and odds!';
+                }
+            });
+            
+            // Start the countdown and odds updates
+            interval = setInterval(updateTimer, 1000);
+            let oddsInterval = setInterval(updateOdds, 5000); // Update odds every 5 seconds
+        });
+    </script>
+</body>
+</html>
